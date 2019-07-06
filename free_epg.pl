@@ -5,7 +5,7 @@ use JSON;
 use DateTime;
 use Getopt::Long;
 my $debug = 0;
-my $numdays = 5;
+my $numdays = 7;
 my %map = (
     '&' => 'and',
 );
@@ -110,10 +110,13 @@ sub getepg {
            print "https://fvau-api-prod.switch.tv/content/v1/epgs/".$id."?start=".$startdate."&end=".$enddate."&sort=start&related_entity_types=episodes.images,shows.images&related_levels=2&include_related=1&expand_related=full&limit=100&offset=0\n" if ($debug);
            
            my $data = `$curl -s -L "https://fvau-api-prod.switch.tv/content/v1/epgs/$id?start=$startdate&end=$enddate&sort=start&related_entity_types=episodes.images,shows.images&related_levels=2&include_related=1&expand_related=full&limit=100&offset=0"`;
-           my $tmpdata = decode_json($data);
-           #print Dumper $tmpdata;
+           my $tmpdata;
+           eval {
+              $tmpdata = decode_json($data);
+              1;
+           };
            $tmpdata = $tmpdata->{data};
-           
+           if (defined($tmpdata)) {
            for(my $count=0;$count<@$tmpdata;$count++){
               $guidedata[$showcount]->{start} = $tmpdata->[$count]->{start};
               $guidedata[$showcount]->{start} =~ s/[-T:]//g;
@@ -146,6 +149,7 @@ sub getepg {
               $guidedata[$showcount]->{id} =~ s/[\s\/]//g;
               $guidedata[$showcount]->{url} = $tmpdata->[$count]->{related}->{episodes}[0]->{related}->{images}[0]->{url};
               $showcount++;
+           }
            }
         }          
    }
