@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use JSON;
 use DateTime;
-use Data::Dumper;
+use Getopt::Long;
 my $debug = 0;
 my $numdays = 5;
 my %map = (
@@ -14,7 +14,57 @@ my $curl = "/usr/bin/curl";
 #https://fvau-api-prod.switch.tv/content/v1/epgs/1012:0400:0406?start=2019-07-04T01:00:00.000Z&end=2019-07-04T04:30:00.000Z&sort=start&related_entity_types=episodes.images,shows.images&related_levels=2&include_related=1&expand_related=full&limit=50&offset=0
 my @channeldata;
 my @guidedata;
+my $region;
+my @regions = (
+    "region_national",
+    "region_nsw_sydney",
+    "region_nsw_newcastle",
+    "region_nsw_taree",
+    "region_nsw_tamworth",
+    "region_nsw_orange_dubbo_wagga",
+    "region_nsw_northern_rivers",
+    "region_nsw_wollongong",
+    "region_nsw_canberra",
+    "region_nt_regional",
+    "region_vic_albury",
+    "region_vic_shepparton",
+    "region_vic_bendigo",
+    "region_vic_melbourne",
+    "region_vic_ballarat",
+    "region_vic_gippsland",
+    "region_qld_brisbane",
+    "region_qld_goldcoast",
+    "region_qld_toowoomba",
+    "region_qld_maryborough",
+    "region_qld_widebay",
+    "region_qld_rockhampton",
+    "region_qld_mackay",
+    "region_qld_townsville",
+    "region_qld_cairns",
+    "region_sa_adelaide",
+    "region_sa_regional",
+    "region_wa_perth",
+    "region_wa_regional_wa",
+    "region_tas_hobart",
+    "region_tas_launceston",
+    );
+    
+GetOptions(
+    'region=s'    => \$region,
+) or die "Incorrect usage!\n";
 
+if (defined($region)) {
+    if (!( grep( /$region/, @regions ) ) ) {
+        print "Invalid region specified.  Please use one of the following:\n";
+        print "\t$_\n" foreach(@regions);
+        exit();
+    }
+}
+else {
+        print "No region specified.  Please use the command free_epg.pl --region=<REGION-NAME>, where REGION-NAME is one of the following:\n";
+        print "\t$_\n" foreach(@regions);
+        exit(); 
+}
 getchannels();
 getepg();
 
@@ -28,7 +78,7 @@ exit();
 
 
 sub getchannels {
-   my $data = `$curl -s -L "https://fvau-api-prod.switch.tv/content/v1/channels/region/region_vic_melbourne?limit=100&offset=0&include_related=1&expand_related=full&related_entity_types=images"`;
+   my $data = `$curl -s -L "https://fvau-api-prod.switch.tv/content/v1/channels/region/$region?limit=100&offset=0&include_related=1&expand_related=full&related_entity_types=images"`;
    my $tmpchanneldata = decode_json($data);   
    $tmpchanneldata = $tmpchanneldata->{data};
    for(my $count=0;$count<@$tmpchanneldata;$count++){
