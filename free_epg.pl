@@ -15,6 +15,7 @@ my $curl = "/usr/bin/curl";
 my @channeldata;
 my @guidedata;
 my $region;
+my $outputfile;
 my @regions = (
     "region_national",
     "region_nsw_sydney",
@@ -51,29 +52,34 @@ my @regions = (
     
 GetOptions(
     'region=s'    => \$region,
+    'file=s'      => \$outputfile,
 ) or die "Incorrect usage!\n";
 
-if (defined($region)) {
-    if (!( grep( /$region/, @regions ) ) ) {
-        print "Invalid region specified.  Please use one of the following:\n";
-        print "\t$_\n" foreach(@regions);
+if ((!defined($region)) || (!defined($outputfile))) {
+        print "\nPlease use the command.\n\tfree_epg.pl --region=<REGION-NAME> --file=<output xmltv filename>.\n\n\tREGION-NAME is one of the following:\n";
+        print "\t\t$_\n" foreach(@regions);
+        print "\n";
+        exit();      
+}
+
+elsif (defined($region)) {
+    if (!( grep( /^$region$/, @regions ) ) ) {
+        print "\nInvalid region specified.  Please use one of the following:\n";
+        print "\t\t$_\n" foreach(@regions);
         exit();
     }
 }
-else {
-        print "No region specified.  Please use the command free_epg.pl --region=<REGION-NAME>, where REGION-NAME is one of the following:\n";
-        print "\t$_\n" foreach(@regions);
-        exit(); 
-}
+
 getchannels();
 getepg();
 
-print "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n";
-print "<tv generator-info-url=\"http://www.xmltv.org/\">\n";
-printchannels();
 
+open(my $fh, '>:encoding(UTF-8)', $outputfile) or die "Could not create the file '$outputfile' $!";
+print $fh "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n";
+print $fh "<tv generator-info-url=\"http://www.xmltv.org/\">\n";
+printchannels();
 printepg();
-print "</tv>\n";
+print $fh "</tv>\n";
 exit();
 
 
@@ -160,10 +166,10 @@ sub getepg {
 
 sub printchannels {
    foreach my $channel (@channeldata) {
-     print "\t<channel id=\"".$channel->{id}."\">\n";
-     print "\t\t<display-name>".$channel->{name}."</display-name>\n";
-     print "\t\t<icon src=\"".$channel->{icon}."\" />\n" if (defined($channel->{icon}));
-     print "\t</channel>\n";
+     print $fh "\t<channel id=\"".$channel->{id}."\">\n";
+     print $fh "\t\t<display-name>".$channel->{name}."</display-name>\n";
+     print $fh "\t\t<icon src=\"".$channel->{icon}."\" />\n" if (defined($channel->{icon}));
+     print $fh "\t</channel>\n";
    }
    return;
 }
@@ -176,39 +182,39 @@ sub printepg {
 
         $title =~ s/([$chars])/$map{$1}/g;   
         $title =~ s/[^\040-\176]/ /g;     
-        print "\t<programme start=\"$items->{start}\" stop=\"$items->{stop}\" channel=\"$items->{id}\">\n";
-        print "\t\t<title>".$title."</title>\n";
+        print $fh "\t<programme start=\"$items->{start}\" stop=\"$items->{stop}\" channel=\"$items->{id}\">\n";
+        print $fh "\t\t<title>".$title."</title>\n";
         if (defined($items->{subtitle})) {
            my $subtitle = $items->{subtitle};
            $subtitle =~ s/([$chars])/$map{$1}/g;
-           print "\t\t<sub-title>".$subtitle."</sub-title>\n";
+           print $fh "\t\t<sub-title>".$subtitle."</sub-title>\n";
         }
         if (defined($items->{desc})) {
           my $description = $items->{desc};
           $description =~ s/([$chars])/$map{$1}/g;
           $description =~ s/[^\040-\176]/ /g;
-          print "\t\t<desc>".$description."</desc>\n" ;
+          print $fh "\t\t<desc>".$description."</desc>\n" ;
         }
         foreach my $category (@{$items->{categories}}) {
            if (defined($category)) {
               $category =~ s/([$chars])/$map{$1}/g;
               $category =~ s/[^\040-\176]/ /g;
-              print "\t\t<category lang=\"en\">$category</category>\n" if defined($category);
+              print $fh "\t\t<category lang=\"en\">$category</category>\n" if defined($category);
            }
         }
         
-        print "\t\t<icon src=\"$items->{url}\" />\n" if (defined($items->{url}));                
+        print $fh "\t\t<icon src=\"$items->{url}\" />\n" if (defined($items->{url}));                
         if (defined($items->{season}) && defined($items->{episode})) {
-           print "\t\t<episode-num system=\"SxxExx\">S$items->{season}E$items->{episode}</episode-num>\n";
+           print $fh "\t\t<episode-num system=\"SxxExx\">S$items->{season}E$items->{episode}</episode-num>\n";
            my $series = $items->{season} - 1;
            my $episode = $items->{episode} - 1;
            $series = 0 if ($series < 0);
            $episode = 0 if ($episode < 0);
-           print "\t\t<episode-num system=\"xmltv_ns\">$series.$episode.</episode-num>\n"
+           print $fh "\t\t<episode-num system=\"xmltv_ns\">$series.$episode.</episode-num>\n"
            
         }
-        print "\t\t<episode-num system=\"original-air-date\">$items->{originalairdate}</episode-num>\n" if (defined($items->{originalairdate}));        
-        print "\t</programme>\n";
+        print $fh "\t\t<episode-num system=\"original-air-date\">$items->{originalairdate}</episode-num>\n" if (defined($items->{originalairdate}));        
+        print $fh "\t</programme>\n";
     }
     return;
 }
