@@ -4,14 +4,15 @@ use warnings;
 use JSON;
 use DateTime;
 use Getopt::Long;
+use LWP::UserAgent;
+
 my $debug = 0;
 my $numdays = 7;
 my %map = (
     '&' => 'and',
 );
 my $chars = join '', keys %map;
-my $curl = "/usr/bin/curl";
-#https://fvau-api-prod.switch.tv/content/v1/epgs/1012:0400:0406?start=2019-07-04T01:00:00.000Z&end=2019-07-04T04:30:00.000Z&sort=start&related_entity_types=episodes.images,shows.images&related_levels=2&include_related=1&expand_related=full&limit=50&offset=0
+
 my @channeldata;
 my @guidedata;
 my $region;
@@ -72,8 +73,6 @@ elsif (defined($region)) {
 
 getchannels();
 getepg();
-
-
 open(my $fh, '>:encoding(UTF-8)', $outputfile) or die "Could not create the file '$outputfile' $!";
 print $fh "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n";
 print $fh "<tv generator-info-url=\"http://www.xmltv.org/\">\n";
@@ -84,7 +83,15 @@ exit();
 
 
 sub getchannels {
-   my $data = `$curl -s -L "https://fvau-api-prod.switch.tv/content/v1/channels/region/$region?limit=100&offset=0&include_related=1&expand_related=full&related_entity_types=images"`;
+   my $data;
+   my $ua = LWP::UserAgent->new;
+   my $res = $ua->get('https://fvau-api-prod.switch.tv/content/v1/channels/region/$region?limit=100&offset=0&include_related=1&expand_related=full&related_entity_types=images');
+   if ($res->is_success) {
+       $data = $res->content;
+       print "$data\n" if ($debug);
+   } else {
+      die "Unable to connect to FreeView.\n";
+   }
    my $tmpchanneldata = decode_json($data);   
    $tmpchanneldata = $tmpchanneldata->{data};
    for(my $count=0;$count<@$tmpchanneldata;$count++){
@@ -99,7 +106,6 @@ sub getchannels {
 };
 
 sub getepg {
-#https://fvau-api-prod.switch.tv/content/v1/epgs/1012:0400:0406?start=2019-07-04T01:00:00.000Z&end=2019-07-04T04:30:00.000Z&sort=start&related_entity_types=episodes.images,shows.images&related_levels=2&include_related=1&expand_related=full&limit=50&offset=0
    my $showcount = 0;
    foreach my $channel (@channeldata) {
       my $id = $channel->{dvb_triplet};
@@ -114,8 +120,16 @@ sub getepg {
            my $startdate=sprintf("%0.4d-%0.2d-%0.2dT%0.2d:%0.2d:%0.2dZ",($syear+1900),$smon+1,$smday,$shour,$smin,$ssec);
            my $enddate =sprintf("%0.4d-%0.2d-%0.2dT%0.2d:%0.2d:%0.2dZ",($eyear+1900),$emon+1,$emday,$ehour,$emin,$esec);
            print "https://fvau-api-prod.switch.tv/content/v1/epgs/".$id."?start=".$startdate."&end=".$enddate."&sort=start&related_entity_types=episodes.images,shows.images&related_levels=2&include_related=1&expand_related=full&limit=100&offset=0\n" if ($debug);
-           
-           my $data = `$curl -s -L "https://fvau-api-prod.switch.tv/content/v1/epgs/$id?start=$startdate&end=$enddate&sort=start&related_entity_types=episodes.images,shows.images&related_levels=2&include_related=1&expand_related=full&limit=100&offset=0"`;
+           my $data;
+           my $ua = LWP::UserAgent->new;
+           my $url = "https://fvau-api-prod.switch.tv/content/v1/epgs/".$id."?start=".$startdate."&end=".$enddate."&sort=start&related_entity_types=episodes.images,shows.images&related_levels=2&include_related=1&expand_related=full&limit=100&offset=0";
+           my $res = $ua->get($url);
+           if ($res->is_success) {
+               $data = $res->content;
+               print "$data\n" if ($debug);
+           } else {
+               die "Unable to connect to FreeView.\n";
+           }
            my $tmpdata;
            eval {
               $tmpdata = decode_json($data);
