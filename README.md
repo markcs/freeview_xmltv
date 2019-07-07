@@ -2,7 +2,7 @@
 xmltv file from Freeview Australia
 
 Usage:
-        free_epg.pl --region=<REGION-NAME> --file=<output xmltv filename>.
+        `free_epg.pl --region=<REGION-NAME> --file=<output xmltv filename>`
 
         REGION-NAME is one of the following:
                 region_national
@@ -36,4 +36,3 @@ Usage:
                 region_wa_regional_wa
                 region_tas_hobart
                 region_tas_launceston
-
