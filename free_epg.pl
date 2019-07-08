@@ -120,7 +120,7 @@ sub getchannels {
    for(my $count=0;$count<@$tmpchanneldata;$count++){
          $CHANNELDATA[$count]->{dvb_triplet} = $tmpchanneldata->[$count]->{dvb_triplet};
          $CHANNELDATA[$count]->{name} = $tmpchanneldata->[$count]->{channel_name};
-         $CHANNELDATA[$count]->{id} = $tmpchanneldata->[$count]->{lcn}.".".$tmpchanneldata->[$count]->{channel_name};
+         $CHANNELDATA[$count]->{id} = $tmpchanneldata->[$count]->{lcn};
          $CHANNELDATA[$count]->{id} =~ s/[\s\/]//g;
          $CHANNELDATA[$count]->{lcn} = $tmpchanneldata->[$count]->{lcn};
          $CHANNELDATA[$count]->{icon} = $tmpchanneldata->[$count]->{related}->{images}[0]->{url};
@@ -189,7 +189,7 @@ sub getepg {
               $GUIDEDATA[$showcount]->{episode} = $tmpdata->[$count]->{related}->{episodes}[0]->{episode_number} if (defined($tmpdata->[$count]->{related}->{episodes}[0]->{episode_number}));              
               $GUIDEDATA[$showcount]->{desc} = $tmpdata->[$count]->{related}->{episodes}[0]->{synopsis};
               $GUIDEDATA[$showcount]->{subtitle} = $tmpdata->[$count]->{related}->{episodes}[0]->{title};
-              $GUIDEDATA[$showcount]->{id} = $lcn.".".$tmpdata->[$count]->{channel_name};
+              $GUIDEDATA[$showcount]->{id} = $lcn;
               $GUIDEDATA[$showcount]->{id} =~ s/[\s\/]//g;
               $GUIDEDATA[$showcount]->{url} = $tmpdata->[$count]->{related}->{episodes}[0]->{related}->{images}[0]->{url};
               $showcount++;
@@ -249,8 +249,8 @@ sub printepg {
            my $episode = $items->{episode} - 1;
            $series = 0 if ($series < 0);
            $episode = 0 if ($episode < 0);
-           $episodeseries = "$series.$episode.";
-           ${$XMLRef}->dataElement('episode-num', $episodeseries, 'system' => 'xmltv_ns') ;       
+           $episodeseries = "$series.$episode.";            
+           ${$XMLRef}->dataElement('episode-num', "$series.$episode.", 'system' => 'xmltv_ns');      
         }
         ${$XMLRef}->dataElement('episode-num', $items->{originalairdate}, 'system' => 'original-air-date') if (defined($items->{originalairdate}));  
         ${$XMLRef}->endTag('programme');
