@@ -178,23 +178,30 @@ sub getepg
 					$GUIDEDATA[$showcount]->{title} = $tmpdata->[$count]->{related}->{shows}[0]->{title};
 					my $catcount = 0;			
 					foreach my $tmpcat (@{$tmpdata->[$count]->{related}->{episodes}[0]->{categories}})
-					{
+					{						
 						if ($tmpcat =~ /season_number/)
-						{							
+						{
 							$tmpcat =~ s/season_number\/(.*)/$1/;
 							$GUIDEDATA[$showcount]->{season} = $tmpcat;
 						}
-						if ( ($tmpcat =~ /content_type\/series/) &&
+						elsif ( ($tmpcat =~ /content_type\/series/) &&
 							 ( !( grep( /season_number/, @{$tmpdata->[$count]->{related}->{episodes}[0]->{categories}} ) ) ) )
 						{  
 							my $tmpseries = toLocalTimeString($tmpdata->[$count]->{start});
 							$tmpseries =~ s/(\d+)-(\d+)-(\d+)T(\d+):(\d+).*/S$1E$2$3$4$5/;
 							$GUIDEDATA[$showcount]->{originalairdate} = "$1-$2-$3 $4:$5:00";
 					 	}
-						$GUIDEDATA[$showcount]->{categories}[$catcount] = $tmpcat;
+						elsif ($tmpcat =~ /classification/) {
+							  $tmpcat =~ s/classification\/(.*)/$1/;
+							  $GUIDEDATA[$showcount]->{rating} = $tmpcat;                
+						}
+						elsif ($tmpcat =~ /genres/) {
+							  $tmpcat =~ s/genres\/(.*)/$1/;
+							  $GUIDEDATA[$showcount]->{categories}[$catcount] = $tmpcat;
+						}
 						$catcount++;							 
-				  	}
-					$GUIDEDATA[$showcount]->{episode} = $tmpdata->[$count]->{related}->{episodes}[0]->{episode_number} if (defined($tmpdata->[$count]->{related}->{episodes}[0]->{episode_number}));				  
+					} 
+					$GUIDEDATA[$showcount]->{episode} = $tmpdata->[$count]->{related}->{episodes}[0]->{episode_number} if (defined($tmpdata->[$count]->{related}->{episodes}[0]->{episode_number}));
 					$GUIDEDATA[$showcount]->{desc} = $tmpdata->[$count]->{related}->{episodes}[0]->{synopsis};
 				 	$GUIDEDATA[$showcount]->{subtitle} = $tmpdata->[$count]->{related}->{episodes}[0]->{title};
 					$GUIDEDATA[$showcount]->{url} = $tmpdata->[$count]->{related}->{episodes}[0]->{related}->{images}[0]->{url};
@@ -247,6 +254,12 @@ sub printepg
 			$episode = 0 if ($episode < 0);
 			$episodeseries = "$series.$episode.";
 			${$XMLRef}->dataElement('episode-num', $episodeseries, 'system' => 'xmltv_ns') ;		 
+		}
+		if (defined($items->{rating})) 
+		{
+			${$XMLRef}->startTag('rating');
+			${$XMLRef}->dataElement('value', $items->{rating});
+			${$XMLRef}->endTag('rating');
 		}
 		${$XMLRef}->dataElement('episode-num', $items->{originalairdate}, 'system' => 'original-air-date') if (defined($items->{originalairdate}));  
 		${$XMLRef}->endTag('programme');
