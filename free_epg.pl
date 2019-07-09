@@ -125,10 +125,8 @@ sub getchannels
 		$CHANNELDATA[$count]->{dvb_triplet} = $tmpchanneldata->[$count]->{dvb_triplet};
 		$CHANNELDATA[$count]->{name} = $tmpchanneldata->[$count]->{channel_name};
 		$CHANNELDATA[$count]->{id} = $tmpchanneldata->[$count]->{lcn} . "." . $tmpchanneldata->[$count]->{channel_name};
-		$CHANNELDATA[$count]->{id} =~ s/[\s\/]//g;
-		$CHANNELDATA[$count]->{lcn} = $tmpchanneldata->[$count]->{lcn};
 		$CHANNELDATA[$count]->{icon} = $tmpchanneldata->[$count]->{related}->{images}[0]->{url};
-		warn("Got channel $CHANNELDATA[$count]->{name} ...\n") if ($VERBOSE);
+		warn("Got channel $CHANNELDATA[$count]->{id} - $CHANNELDATA[$count]->{name} ...\n") if ($VERBOSE);
 	}
 }
 
@@ -139,8 +137,7 @@ sub getepg
 	foreach my $channel (@CHANNELDATA)
 	{
 		my $id = $channel->{dvb_triplet};
-		my $lcn = $channel->{lcn};
-		warn("Getting epg for $channel->{name} ...\n") if ($VERBOSE);
+		warn("Getting epg for $channel->{id} - $channel->{name} ...\n") if ($VERBOSE);
 		my $now = time;
 		$now = $now - 86400;
 		my $offset;
@@ -169,6 +166,7 @@ sub getepg
 			{
 				for (my $count = 0; $count < @$tmpdata; $count++)
 				{
+					$GUIDEDATA[$showcount]->{id} = $channel->{id};
 					$GUIDEDATA[$showcount]->{start} = $tmpdata->[$count]->{start};
 					$GUIDEDATA[$showcount]->{start} =~ s/[-T:]//g;
 					$GUIDEDATA[$showcount]->{start} =~ s/\+/ \+/g;
@@ -198,8 +196,6 @@ sub getepg
 					$GUIDEDATA[$showcount]->{episode} = $tmpdata->[$count]->{related}->{episodes}[0]->{episode_number} if (defined($tmpdata->[$count]->{related}->{episodes}[0]->{episode_number}));				  
 					$GUIDEDATA[$showcount]->{desc} = $tmpdata->[$count]->{related}->{episodes}[0]->{synopsis};
 				 	$GUIDEDATA[$showcount]->{subtitle} = $tmpdata->[$count]->{related}->{episodes}[0]->{title};
-					$GUIDEDATA[$showcount]->{id} = $lcn.".".$tmpdata->[$count]->{channel_name};
-					$GUIDEDATA[$showcount]->{id} =~ s/[\s\/]//g;
 					$GUIDEDATA[$showcount]->{url} = $tmpdata->[$count]->{related}->{episodes}[0]->{related}->{images}[0]->{url};
 					$showcount++;
 				}
