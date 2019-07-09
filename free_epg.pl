@@ -124,7 +124,8 @@ sub getchannels
 	{
 		$CHANNELDATA[$count]->{dvb_triplet} = $tmpchanneldata->[$count]->{dvb_triplet};
 		$CHANNELDATA[$count]->{name} = $tmpchanneldata->[$count]->{channel_name};
-		$CHANNELDATA[$count]->{id} = $tmpchanneldata->[$count]->{lcn} . "." . $tmpchanneldata->[$count]->{channel_name};
+		$CHANNELDATA[$count]->{id} = $tmpchanneldata->[$count]->{lcn}.".freeview.com.au";
+		$CHANNELDATA[$count]->{lcn} = $tmpchanneldata->[$count]->{lcn};
 		$CHANNELDATA[$count]->{icon} = $tmpchanneldata->[$count]->{related}->{images}[0]->{url};
 		warn("Got channel $CHANNELDATA[$count]->{id} - $CHANNELDATA[$count]->{name} ...\n") if ($VERBOSE);
 	}
@@ -212,6 +213,7 @@ sub printchannels
 	{
 		$XML->startTag('channel', 'id' => $channel->{id});
 		$XML->dataElement('display-name', $channel->{name});
+		$XML->dataElement('lcn', $channel->{lcn});
 		$XML->emptyTag('icon', 'src' => $channel->{icon}) if (defined($channel->{icon}));
 		$XML->endTag('channel');	
 	}
