@@ -58,7 +58,7 @@ GetOptions
 	'output=s'	=> \$outputfile,
 	'help|?'	=> \$help,
 ) or die ("Syntax Error!  Try $0 --help");
-die usage() if ($help);	 
+die usage() if ($help);
 
 die(      "\n"
 	. "Please use the command.\n"
@@ -118,7 +118,7 @@ sub getchannels
 	die("Unable to connect to FreeView.\n") if (!$res->is_success);
 
 	$data = $res->content;
-	my $tmpchanneldata = decode_json($data);	
+	my $tmpchanneldata = decode_json($data);
 	$tmpchanneldata = $tmpchanneldata->{data};
 	for (my $count = 0; $count < @$tmpchanneldata; $count++)
 	{
@@ -144,13 +144,13 @@ sub getepg
 		my $offset;
 		my $url;
 		for(my $day = 0; $day < $NUMDAYS; $day++)
-		{ 
-			$offset = $day*86400;		  
+		{
+			$offset = $day*86400;
 			my ($ssec,$smin,$shour,$smday,$smon,$syear,$swday,$syday,$sisdst) = localtime($now+$offset);
 			my ($esec,$emin,$ehour,$emday,$emon,$eyear,$ewday,$eyday,$eisdst) = localtime($now+$offset+86400);
 			my $startdate = sprintf("%0.4d-%0.2d-%0.2dT%0.2d:%0.2d:%0.2dZ",($syear+1900),$smon+1,$smday,$shour,$smin,$ssec);
 			my $enddate = sprintf("%0.4d-%0.2d-%0.2dT%0.2d:%0.2d:%0.2dZ",($eyear+1900),$emon+1,$emday,$ehour,$emin,$esec);
-			warn("\tGetting programs between $startdate and $enddate ...\n") if ($VERBOSE);			  
+			warn("\tGetting programs between $startdate and $enddate ...\n") if ($VERBOSE);
 			my $data;
 			$url = "https://fvau-api-prod.switch.tv/content/v1/epgs/" . $id . "?start=" . $startdate . "&end=" . $enddate
 				. "&sort=start&related_entity_types=episodes.images,shows.images&related_levels=2&include_related=1&expand_related=full&limit=100&offset=0";
@@ -176,31 +176,31 @@ sub getepg
 					$GUIDEDATA[$showcount]->{stop} =~ s/\+/ \+/g;
 					$GUIDEDATA[$showcount]->{channel} = $tmpdata->[$count]->{channel_name};
 					$GUIDEDATA[$showcount]->{title} = $tmpdata->[$count]->{related}->{shows}[0]->{title};
-					my $catcount = 0;			
+					my $catcount = 0;
 					foreach my $tmpcat (@{$tmpdata->[$count]->{related}->{episodes}[0]->{categories}})
-					{						
+					{
 						if ($tmpcat =~ /season_number/)
 						{
 							$tmpcat =~ s/season_number\/(.*)/$1/;
 							$GUIDEDATA[$showcount]->{season} = $tmpcat;
 						}
 						elsif ( ($tmpcat =~ /content_type\/series/) &&
-							 ( !( grep( /season_number/, @{$tmpdata->[$count]->{related}->{episodes}[0]->{categories}} ) ) ) )
-						{  
+							( !( grep( /season_number/, @{$tmpdata->[$count]->{related}->{episodes}[0]->{categories}} ) ) ) )
+						{
 							my $tmpseries = toLocalTimeString($tmpdata->[$count]->{start});
 							$tmpseries =~ s/(\d+)-(\d+)-(\d+)T(\d+):(\d+).*/S$1E$2$3$4$5/;
 							$GUIDEDATA[$showcount]->{originalairdate} = "$1-$2-$3 $4:$5:00";
 					 	}
 						elsif ($tmpcat =~ /classification/) {
-							  $tmpcat =~ s/classification\/(.*)/$1/;
-							  $GUIDEDATA[$showcount]->{rating} = $tmpcat;                
+							$tmpcat =~ s/classification\/(.*)/$1/;
+							$GUIDEDATA[$showcount]->{rating} = $tmpcat;
 						}
 						elsif ($tmpcat =~ /genres/) {
-							  $tmpcat =~ s/genres\/(.*)/$1/;
-							  $GUIDEDATA[$showcount]->{categories}[$catcount] = $tmpcat;
+							$tmpcat =~ s/genres\/(.*)/$1/;
+							$GUIDEDATA[$showcount]->{categories}[$catcount] = $tmpcat;
 						}
-						$catcount++;							 
-					} 
+						$catcount++;
+					}
 					$GUIDEDATA[$showcount]->{episode} = $tmpdata->[$count]->{related}->{episodes}[0]->{episode_number} if (defined($tmpdata->[$count]->{related}->{episodes}[0]->{episode_number}));
 					$GUIDEDATA[$showcount]->{desc} = $tmpdata->[$count]->{related}->{episodes}[0]->{synopsis};
 				 	$GUIDEDATA[$showcount]->{subtitle} = $tmpdata->[$count]->{related}->{episodes}[0]->{title};
@@ -208,9 +208,9 @@ sub getepg
 					$showcount++;
 				}
 			}
-		}			 
+		}
 	}
-	warn("Processed a totol of $showcount shows ...\n") if ($VERBOSE);	
+	warn("Processed a totol of $showcount shows ...\n") if ($VERBOSE);
 }
 
 sub printchannels
@@ -222,11 +222,11 @@ sub printchannels
 		$XML->dataElement('display-name', $channel->{name});
 		$XML->dataElement('lcn', $channel->{lcn});
 		$XML->emptyTag('icon', 'src' => $channel->{icon}) if (defined($channel->{icon}));
-		$XML->endTag('channel');	
+		$XML->endTag('channel');
 	}
 	return;
 }
-  
+
 sub printepg
 {
 	my ($XMLRef) = @_;
@@ -236,32 +236,32 @@ sub printepg
 		my $originalairdate = "";
 
 		${$XMLRef}->startTag('programme', 'start' => "$items->{start}", 'stop' => "$items->{stop}", 'channel' => "$items->{id}");
-		${$XMLRef}->dataElement('title', sanitizeText($items->{title}));		  
+		${$XMLRef}->dataElement('title', sanitizeText($items->{title}));
 		${$XMLRef}->dataElement('sub-title', sanitizeText($items->{subtitle})) if (defined($items->{subtitle}));
 		${$XMLRef}->dataElement('desc', sanitizeText($items->{desc})) if (defined($items->{desc}));
 		foreach my $category (@{$items->{categories}})
 		{
 			${$XMLRef}->dataElement('category', sanitizeText($category)) if (defined($category));
 		}
-		${$XMLRef}->emptyTag('icon', 'src' => $items->{url}) if (defined($items->{url}));					 
+		${$XMLRef}->emptyTag('icon', 'src' => $items->{url}) if (defined($items->{url}));
 		if (defined($items->{season}) && defined($items->{episode}))
 		{
-			my $episodeseries = "S" . $items->{season} . "E" . $items->{episode};			
+			my $episodeseries = "S" . $items->{season} . "E" . $items->{episode};
 			${$XMLRef}->dataElement('episode-num', $episodeseries, 'system' => 'SxxExx');
 			my $series = $items->{season} - 1;
 			my $episode = $items->{episode} - 1;
 			$series = 0 if ($series < 0);
 			$episode = 0 if ($episode < 0);
 			$episodeseries = "$series.$episode.";
-			${$XMLRef}->dataElement('episode-num', $episodeseries, 'system' => 'xmltv_ns') ;		 
+			${$XMLRef}->dataElement('episode-num', $episodeseries, 'system' => 'xmltv_ns') ;
 		}
-		if (defined($items->{rating})) 
+		if (defined($items->{rating}))
 		{
 			${$XMLRef}->startTag('rating');
 			${$XMLRef}->dataElement('value', $items->{rating});
 			${$XMLRef}->endTag('rating');
 		}
-		${$XMLRef}->dataElement('episode-num', $items->{originalairdate}, 'system' => 'original-air-date') if (defined($items->{originalairdate}));  
+		${$XMLRef}->dataElement('episode-num', $items->{originalairdate}, 'system' => 'original-air-date') if (defined($items->{originalairdate}));
 		${$XMLRef}->endTag('programme');
 	}
 }
@@ -278,7 +278,7 @@ sub toLocalTimeString
 {
 	my $fulldate = shift;
 	my ($year, $month, $day, $hour, $min, $sec, $offset) = $fulldate =~ /(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)(\+.*)/;#S$1E$2$3$4$5$6$7/;
-	my ($houroffset, $minoffset) = $offset =~ /(\d+):(\d+)/;	 
+	my ($houroffset, $minoffset) = $offset =~ /(\d+):(\d+)/;
 	my $dt = DateTime->new(
 		 	year		=> $year,
 		 	month		=> $month,
